@@ -1,4 +1,4 @@
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -6,8 +6,82 @@
 
     <!-- TODO: Update blank fragment layout -->
     <TextView
+        android:id="@+id/recordTextView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="Record fragment" />
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:text="Record"
+        android:textSize="30sp"
+        android:gravity="center_horizontal"/>
 
-</FrameLayout>
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/recordTextView"
+        android:id="@+id/runName"
+        android:hint="Name of the run"
+        android:layout_marginTop="10dp"
+        android:editable="true"/>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/runName"
+        android:id="@+id/refreshLayout"
+        android:layout_marginTop="10dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="GPS refresh rate"
+            android:layout_centerVertical="true"
+            android:textSize="15sp"
+            android:layout_marginLeft="@dimen/activity_horizontal_margin"/>
+
+        <NumberPicker
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:id="@+id/refreshRatePicker"
+            android:layout_marginRight="@dimen/activity_horizontal_margin"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="seconds"
+            android:layout_toRightOf="@id/refreshRatePicker"
+            android:layout_centerVertical="true"
+            android:textSize="15sp"
+            android:layout_marginLeft="10dp"/>
+
+        </RelativeLayout>
+
+    <CheckBox
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Upload on completion"
+        android:layout_centerHorizontal="true"
+        android:checked="true"
+        android:id="@+id/uploadCheckbox"
+        android:layout_below="@id/refreshLayout"
+        android:layout_marginTop="10dp"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/uploadCheckbox"
+        android:id="@+id/gpsStatus"
+        android:text="Waiting for GPS lock"
+        android:gravity="center"
+        android:layout_marginTop="10dp"/>
+
+    <ToggleButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textOn="Stop"
+        android:textOff="Record"
+        android:layout_below="@id/gpsStatus"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="25dp"/>
+
+</RelativeLayout>

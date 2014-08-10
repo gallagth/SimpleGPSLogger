@@ -7,6 +7,7 @@ import android.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.NumberPicker;
 
 import com.gallagth.simplegpslogger.MainActivity;
 import com.gallagth.simplegpslogger.R;
@@ -25,6 +26,8 @@ public class RecordFragment extends Fragment {
 
     private OnFragmentInteractionListener mListener;
     private int mSectionNumber;
+
+    private NumberPicker mRefreshRatePicker;
 
     public static RecordFragment newInstance(int sectionNumber) {
         RecordFragment fragment = new RecordFragment();
@@ -45,8 +48,13 @@ public class RecordFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_record, container, false);
+        View view = inflater.inflate(R.layout.fragment_record, container, false);
+        mRefreshRatePicker = (NumberPicker) view.findViewById(R.id.refreshRatePicker);
+        configureRefreshRatePicker(mRefreshRatePicker);
+        return view;
     }
+
+
 
     // TODO: Rename method, update argument and hook method into UI event
     public void onButtonPressed(Uri uri) {
@@ -94,6 +102,12 @@ public class RecordFragment extends Fragment {
     public interface OnFragmentInteractionListener {
         // TODO: Update argument type and name
         public void onFragmentInteraction(Uri uri);
+    }
+
+    private void configureRefreshRatePicker(NumberPicker picker) {
+        picker.setEnabled(true);
+        picker.setMinValue(1);
+        picker.setMaxValue(30);
     }
 
 }
