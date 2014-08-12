@@ -1,16 +1,27 @@
 package com.gallagth.simplegpslogger.ui;
 
 import android.app.Activity;
+import android.app.Service;
+import android.content.ComponentName;
+import android.content.ServiceConnection;
 import android.net.Uri;
 import android.os.Bundle;
 import android.app.Fragment;
+import android.os.IBinder;
+import android.os.Messenger;
+import android.os.RemoteException;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CompoundButton;
 import android.widget.NumberPicker;
+import android.widget.Toast;
+import android.widget.ToggleButton;
 
 import com.gallagth.simplegpslogger.MainActivity;
 import com.gallagth.simplegpslogger.R;
+import com.gallagth.simplegpslogger.utils.LocationRecorder;
+import com.gallagth.simplegpslogger.utils.ServiceHelper;
 
 
 /**
@@ -28,6 +39,7 @@ public class RecordFragment extends Fragment {
     private int mSectionNumber;
 
     private NumberPicker mRefreshRatePicker;
+    private ToggleButton mRecordButton;
 
     public static RecordFragment newInstance(int sectionNumber) {
         RecordFragment fragment = new RecordFragment();
@@ -45,12 +57,36 @@ public class RecordFragment extends Fragment {
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+        //TODO
+        //boolean isRecording = LocationRecorder.isRecording();
+        //mRecordButton.setChecked(isRecording);
+    }
+
+    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_record, container, false);
         mRefreshRatePicker = (NumberPicker) view.findViewById(R.id.refreshRatePicker);
         configureRefreshRatePicker(mRefreshRatePicker);
+        mRecordButton = (ToggleButton) view.findViewById(R.id.recordButton);
+        mRecordButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                Messenger service = ((MainActivity) getActivity()).getLocationService();
+                try {
+                    if (isChecked) {
+                        ServiceHelper.startRecording(service);
+                    } else {
+                        ServiceHelper.stopRecording(service);
+                    }
+                } catch (RemoteException e) {
+                    Toast.makeText(getActivity(), "Failed to launch service", Toast.LENGTH_LONG).show();
+                }
+            }
+        });
         return view;
     }
 
