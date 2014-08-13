@@ -14,6 +14,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CompoundButton;
+import android.widget.EditText;
 import android.widget.NumberPicker;
 import android.widget.Toast;
 import android.widget.ToggleButton;
@@ -40,6 +41,7 @@ public class RecordFragment extends Fragment {
 
     private NumberPicker mRefreshRatePicker;
     private ToggleButton mRecordButton;
+    private EditText mRunNameEditText;
 
     public static RecordFragment newInstance(int sectionNumber) {
         RecordFragment fragment = new RecordFragment();
@@ -71,6 +73,7 @@ public class RecordFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_record, container, false);
         mRefreshRatePicker = (NumberPicker) view.findViewById(R.id.refreshRatePicker);
         configureRefreshRatePicker(mRefreshRatePicker);
+        mRunNameEditText = (EditText) view.findViewById(R.id.runName);
         mRecordButton = (ToggleButton) view.findViewById(R.id.recordButton);
         mRecordButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -78,7 +81,12 @@ public class RecordFragment extends Fragment {
                 Messenger service = ((MainActivity) getActivity()).getLocationService();
                 try {
                     if (isChecked) {
-                        ServiceHelper.startRecording(service);
+                        String runName = getRunName();
+                        if (runName.isEmpty()) {
+                            //TODO toast
+                        } else {
+                            ServiceHelper.startRecording(service, runName);
+                        }
                     } else {
                         ServiceHelper.stopRecording(service);
                     }
@@ -90,6 +98,9 @@ public class RecordFragment extends Fragment {
         return view;
     }
 
+    private String getRunName() {
+        return mRunNameEditText.getText().toString();
+    }
 
 
     // TODO: Rename method, update argument and hook method into UI event

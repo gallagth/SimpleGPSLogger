@@ -91,18 +91,24 @@ public class MainActivity extends Activity
         mNavigationDrawerFragment.setUp(
                 R.id.navigation_drawer,
                 (DrawerLayout) findViewById(R.id.drawer_layout));
+
+        startService(new Intent(this, LocationRecorder.class));
     }
 
     @Override
-    protected void onStart() {
-        super.onStart();
-        bindService(new Intent(this, LocationRecorder.class), mServiceConnection, BIND_AUTO_CREATE);
+    protected void onResume() {
+        super.onResume();
+        if (!isBound()) {
+            bindService(new Intent(this, LocationRecorder.class), mServiceConnection, BIND_AUTO_CREATE);
+        }
     }
 
     @Override
-    protected void onStop() {
-        super.onStop();
-        unbindService(mServiceConnection);
+    protected void onPause() {
+        super.onPause();
+        if (isBound()) {
+            unbindService(mServiceConnection);
+        }
     }
 
     @Override

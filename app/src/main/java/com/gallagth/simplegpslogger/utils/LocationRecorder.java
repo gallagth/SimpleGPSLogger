@@ -18,6 +18,16 @@ import android.support.v4.app.NotificationCompat;
 
 import com.gallagth.simplegpslogger.MainActivity;
 import com.gallagth.simplegpslogger.R;
+import com.gallagth.simplegpslogger.model.GeoPoint;
+import com.gallagth.simplegpslogger.model.Run;
+import com.gallagth.simplegpslogger.model.StampedPoint;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 
 /**
  * Created by Thomas on 11/08/2014.
@@ -32,12 +42,21 @@ public class LocationRecorder extends Service {
     public static final int STOP_UPDATES = 5;
     public static final String MIN_TIME_KEY = "minTime";
     public static final String MIN_DISTANCE_KEY = "minDistance";
+    public static final String RUN_NAME_KEY = "runName";
+
+    private Gson mGson;
+    private Run mCurrentRun;
 
     private LocationManager mLocationManager;
     private LocationListener mLocationListener = new LocationListener() {
         @Override
         public void onLocationChanged(Location location) {
-
+            if (isRecording()) {
+                StampedPoint point = new StampedPoint(
+                        location.getTime(),
+                        new GeoPoint(location.getLatitude(), location.getLongitude(), location.getAltitude()));
+                mCurrentRun.appendPoint(point);
+            }
         }
 
         @Override
@@ -69,17 +88,30 @@ public class LocationRecorder extends Service {
         isUpdating = false;
     }
 
-    private void startRecording() {
+    private void startRecording(String runName) {
         if (!isUpdating()) {
             throw new IllegalStateException("Must call start updates before recording");
         }
         //show notification
         showNotification();
-        //TODO actually start recording
+        mCurrentRun = new Run(runName, System.currentTimeMillis());
         isRecording = true;
     }
 
     private void stopRecording() {
+        //write the run to a file
+        String json = mGson.toJson(mCurrentRun);
+        File outFile = new File(this.getExternalFilesDir(null), mCurrentRun.generateFileName());
+        try {
+            BufferedWriter writer = new BufferedWriter(new FileWriter(outFile));
+            writer.write(json);
+            writer.flush();
+            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+            //TODO careful here we lost the run!
+        }
+        //hide the notification
         NotificationManager manager = (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
         manager.cancel(NOTIFICATION_ID);
         isRecording = false;
@@ -98,7 +130,7 @@ public class LocationRecorder extends Service {
                 .setSmallIcon(R.drawable.ic_drawer)
                 .setContentTitle("Recording GPS track")
                 .setContentText("5 minutes, 132 points")
-                .setAutoCancel(true)    //TODO is this good?
+                .setAutoCancel(false)
                 .setOngoing(true);
         Intent resultIntent = new Intent(this, MainActivity.class);
         resultIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -113,6 +145,7 @@ public class LocationRecorder extends Service {
         super.onCreate();
         isUpdating = false;
         mLocationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+        mGson = new GsonBuilder().setPrettyPrinting().create();
     }
 
     @Override
@@ -127,7 +160,8 @@ public class LocationRecorder extends Service {
         public void handleMessage(Message msg) {
             switch (msg.what) {
                 case START_RECORDING:
-                    startRecording();
+                    String runName = msg.getData().getString(RUN_NAME_KEY);
+                    startRecording(runName);
                     break;
                 case STOP_RECORDING:
                     stopRecording();

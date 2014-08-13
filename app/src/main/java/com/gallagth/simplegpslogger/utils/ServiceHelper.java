@@ -11,7 +11,7 @@ import android.os.RemoteException;
 public class ServiceHelper {
 
     public static void startUpdates(Messenger service) throws RemoteException {
-        startUpdates(service, 10000, 0);
+        startUpdates(service, 1000, 0);
     }
 
     public static void startUpdates(Messenger service, long minTime, float minDistance) throws RemoteException {
@@ -36,9 +36,12 @@ public class ServiceHelper {
         service.send(msg);
     }
 
-    public static void startRecording(Messenger service) throws RemoteException {
+    public static void startRecording(Messenger service, String runName) throws RemoteException {
         Message msg = new Message();
         msg.what = LocationRecorder.START_RECORDING;
+        Bundle bundle = new Bundle();
+        bundle.putString(LocationRecorder.RUN_NAME_KEY, runName);
+        msg.setData(bundle);
         service.send(msg);
     }
 }
