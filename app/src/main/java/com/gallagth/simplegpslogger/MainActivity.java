@@ -72,9 +72,6 @@ public class MainActivity extends Activity
     }
 
     public Messenger getLocationService() {
-        if (mService == null) {
-            throw new IllegalStateException("Service is not bound yet!");
-        }
         return mService;
     }
 

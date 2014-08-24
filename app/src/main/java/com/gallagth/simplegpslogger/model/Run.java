@@ -1,5 +1,7 @@
 package com.gallagth.simplegpslogger.model;
 
+import android.location.Location;
+
 import java.util.LinkedList;
 
 /**
@@ -9,12 +11,12 @@ public class Run {
 
     private String name;
     private long creationTime;
-    private LinkedList<StampedPoint> points;
+    private LinkedList<Location> locations;
 
     public Run(String name, long creationDate) {
         this.name = name;
         this.creationTime = creationDate;
-        this.points = new LinkedList<StampedPoint>();
+        this.locations = new LinkedList<Location>();
     }
 
     public String getName() {
@@ -33,16 +35,16 @@ public class Run {
         this.creationTime = creationTime;
     }
 
-    public LinkedList<StampedPoint> getPoints() {
-        return points;
+    public LinkedList<Location> getLocations() {
+        return locations;
     }
 
-    public void setPoints(LinkedList<StampedPoint> points) {
-        this.points = points;
+    public void setLocations(LinkedList<Location> locations) {
+        this.locations = locations;
     }
 
-    public boolean appendPoint(StampedPoint point) {
-        return points.add(point);
+    public boolean appendLocation(Location point) {
+        return locations.add(point);
     }
 
     public String generateFileName() {

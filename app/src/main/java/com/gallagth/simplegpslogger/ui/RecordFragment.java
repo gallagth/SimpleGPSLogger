@@ -1,21 +1,22 @@
 package com.gallagth.simplegpslogger.ui;
 
 import android.app.Activity;
-import android.app.Service;
-import android.content.ComponentName;
-import android.content.ServiceConnection;
+import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
 import android.app.Fragment;
-import android.os.IBinder;
+import android.os.Handler;
+import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.NumberPicker;
+import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
@@ -23,6 +24,11 @@ import com.gallagth.simplegpslogger.MainActivity;
 import com.gallagth.simplegpslogger.R;
 import com.gallagth.simplegpslogger.utils.LocationRecorder;
 import com.gallagth.simplegpslogger.utils.ServiceHelper;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Timer;
+import java.util.TimerTask;
 
 
 /**
@@ -42,6 +48,8 @@ public class RecordFragment extends Fragment {
     private NumberPicker mRefreshRatePicker;
     private ToggleButton mRecordButton;
     private EditText mRunNameEditText;
+    private CheckBox mUploadCheckBox;
+    private TextView mGpsTextView;
 
     public static RecordFragment newInstance(int sectionNumber) {
         RecordFragment fragment = new RecordFragment();
@@ -64,6 +72,13 @@ public class RecordFragment extends Fragment {
         //TODO
         //boolean isRecording = LocationRecorder.isRecording();
         //mRecordButton.setChecked(isRecording);
+        updateGpsText(true);
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        updateGpsText(false);
     }
 
     @Override
@@ -74,6 +89,8 @@ public class RecordFragment extends Fragment {
         mRefreshRatePicker = (NumberPicker) view.findViewById(R.id.refreshRatePicker);
         configureRefreshRatePicker(mRefreshRatePicker);
         mRunNameEditText = (EditText) view.findViewById(R.id.runName);
+        mUploadCheckBox = (CheckBox) view.findViewById(R.id.uploadCheckbox);
+        mGpsTextView = (TextView) view.findViewById(R.id.gpsStatus);
         mRecordButton = (ToggleButton) view.findViewById(R.id.recordButton);
         mRecordButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -83,12 +100,17 @@ public class RecordFragment extends Fragment {
                     if (isChecked) {
                         String runName = getRunName();
                         if (runName.isEmpty()) {
-                            //TODO toast
+                            Toast.makeText(RecordFragment.this.getActivity(),
+                                    "Your run wants a name", Toast.LENGTH_SHORT).show();
+                            mRecordButton.setChecked(false);
                         } else {
-                            ServiceHelper.startRecording(service, runName);
+                            int rateSeconds = mRefreshRatePicker.getValue();
+                            ServiceHelper.startRecording(service, runName, rateSeconds);
+                            setUiEnabled(false);
                         }
                     } else {
                         ServiceHelper.stopRecording(service);
+                        setUiEnabled(true);
                     }
                 } catch (RemoteException e) {
                     Toast.makeText(getActivity(), "Failed to launch service", Toast.LENGTH_LONG).show();
@@ -157,4 +179,48 @@ public class RecordFragment extends Fragment {
         picker.setMaxValue(30);
     }
 
+    private void setUiEnabled(boolean enabled) {
+        mRefreshRatePicker.setEnabled(enabled);
+        mRunNameEditText.setEnabled(enabled);
+        mUploadCheckBox.setEnabled(enabled);
+    }
+
+    private Timer mGpsTextTimer;
+    private void updateGpsText(boolean update) {
+        if (update && mGpsTextTimer == null) {
+            mGpsTextTimer = new Timer();
+            mGpsTextTimer.scheduleAtFixedRate(new TimerTask() {
+                @Override
+                public void run() {
+                    Messenger service = ((MainActivity) getActivity()).getLocationService();
+                    try {
+                        ServiceHelper.getLatestLocation(service, mLocationServiceMessenger);
+                    } catch (RemoteException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }, 0, 1000);
+        } else if (!update && mGpsTextTimer != null) {
+            mGpsTextTimer.purge();
+            mGpsTextTimer.cancel();
+            mGpsTextTimer = null;
+        }
+    }
+
+    private Messenger mLocationServiceMessenger = new Messenger(new IncomingHandler());
+    private class IncomingHandler extends Handler {
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            switch (msg.what) {
+                case LocationRecorder.GET_LOCATION:
+                    Location loc = msg.getData().getParcelable(LocationRecorder.LOCATION_KEY);
+                    SimpleDateFormat df = new SimpleDateFormat("HH:mm:ss");
+                    Date d = new Date(loc.getTime());
+                    mGpsTextView.setText(String.format("%s  %.3f  %.3f",
+                            df.format(d), loc.getLatitude(), loc.getLongitude()));
+                    break;
+            }
+        }
+    }
 }

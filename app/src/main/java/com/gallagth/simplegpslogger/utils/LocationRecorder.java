@@ -1,6 +1,5 @@
 package com.gallagth.simplegpslogger.utils;
 
-import android.app.IntentService;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -14,13 +13,12 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
+import android.os.RemoteException;
 import android.support.v4.app.NotificationCompat;
 
 import com.gallagth.simplegpslogger.MainActivity;
 import com.gallagth.simplegpslogger.R;
-import com.gallagth.simplegpslogger.model.GeoPoint;
 import com.gallagth.simplegpslogger.model.Run;
-import com.gallagth.simplegpslogger.model.StampedPoint;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -40,22 +38,25 @@ public class LocationRecorder extends Service {
     public static final int STOP_RECORDING = 3;
     public static final int START_UPDATES = 4;
     public static final int STOP_UPDATES = 5;
+    public static final int GET_LOCATION = 6;
+
     public static final String MIN_TIME_KEY = "minTime";
     public static final String MIN_DISTANCE_KEY = "minDistance";
     public static final String RUN_NAME_KEY = "runName";
+    public static final String GPS_RATE_KEY = "gpsRateSeconds";
+    public static final String LOCATION_KEY = "location";
 
     private Gson mGson;
     private Run mCurrentRun;
 
     private LocationManager mLocationManager;
+    private Location mLastLocation;
     private LocationListener mLocationListener = new LocationListener() {
         @Override
         public void onLocationChanged(Location location) {
+            mLastLocation = location;
             if (isRecording()) {
-                StampedPoint point = new StampedPoint(
-                        location.getTime(),
-                        new GeoPoint(location.getLatitude(), location.getLongitude(), location.getAltitude()));
-                mCurrentRun.appendPoint(point);
+                mCurrentRun.appendLocation(location);
             }
         }
 
@@ -88,14 +89,13 @@ public class LocationRecorder extends Service {
         isUpdating = false;
     }
 
-    private void startRecording(String runName) {
-        if (!isUpdating()) {
-            throw new IllegalStateException("Must call start updates before recording");
-        }
-        //show notification
-        showNotification();
+    private void startRecording(String runName, int gpsRateSeconds) {
+        stopUpdates();
+        startUpdates(gpsRateSeconds * 1000, 0);
         mCurrentRun = new Run(runName, System.currentTimeMillis());
         isRecording = true;
+        //show notification
+        showNotification();
     }
 
     private void stopRecording() {
@@ -155,13 +155,14 @@ public class LocationRecorder extends Service {
 
     private final Messenger mMessenger = new Messenger(new IncomingHandler());
 
-    public class IncomingHandler extends Handler {
+    private class IncomingHandler extends Handler {
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
                 case START_RECORDING:
                     String runName = msg.getData().getString(RUN_NAME_KEY);
-                    startRecording(runName);
+                    int gpsRateSeconds = msg.getData().getInt(GPS_RATE_KEY);
+                    startRecording(runName, gpsRateSeconds);
                     break;
                 case STOP_RECORDING:
                     stopRecording();
@@ -174,6 +175,16 @@ public class LocationRecorder extends Service {
                 case STOP_UPDATES:
                     stopUpdates();
                     break;
+                case GET_LOCATION:
+                    Messenger client = msg.replyTo;
+                    Message payload = new Message();
+                    payload.what = GET_LOCATION;
+                    payload.getData().putParcelable(LOCATION_KEY, mLastLocation);
+                    try {
+                        client.send(payload);
+                    } catch (RemoteException e) {
+                        e.printStackTrace();
+                    }
                 default:
                     super.handleMessage(msg);
             }
