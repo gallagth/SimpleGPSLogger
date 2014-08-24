@@ -5,29 +5,22 @@ import android.app.Activity;
 import android.app.ActionBar;
 import android.app.Fragment;
 import android.app.FragmentManager;
-import android.app.Service;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
 import android.support.v4.widget.DrawerLayout;
 
-import com.gallagth.simplegpslogger.ui.ListFragment;
+import com.gallagth.simplegpslogger.ui.RunListFragment;
 import com.gallagth.simplegpslogger.ui.NavigationDrawerFragment;
 import com.gallagth.simplegpslogger.ui.RecordFragment;
 import com.gallagth.simplegpslogger.utils.LocationRecorder;
 import com.gallagth.simplegpslogger.utils.ServiceHelper;
-
-import java.util.List;
 
 
 public class MainActivity extends Activity
@@ -118,7 +111,7 @@ public class MainActivity extends Activity
                 toShow = RecordFragment.newInstance(position);
                 break;
             case 1:
-                toShow = ListFragment.newInstance(position);
+                toShow = RunListFragment.newInstance(position);
                 break;
             default:
                 return;
