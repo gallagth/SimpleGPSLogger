@@ -215,6 +215,10 @@ public class RecordFragment extends Fragment {
             switch (msg.what) {
                 case LocationRecorder.GET_LOCATION:
                     Location loc = msg.getData().getParcelable(LocationRecorder.LOCATION_KEY);
+                    if (loc == null) {
+                        //no location yet
+                        break;
+                    }
                     SimpleDateFormat df = new SimpleDateFormat("HH:mm:ss");
                     Date d = new Date(loc.getTime());
                     mGpsTextView.setText(String.format("%s  %.3f  %.3f",
